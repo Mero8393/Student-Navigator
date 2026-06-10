@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Учебный навигатор пары</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #eef5ff, #dfeaff); color: #17324d; min-height: 100vh; padding: 24px; }
+    .app { max-width: 1180px; margin: 0 auto; }
+    header { background: #0d47a1; color: white; padding: 22px; border-radius: 18px; box-shadow: 0 8px 24px rgba(13,71,161,.25); }
+    header h1 { font-size: 34px; margin-bottom: 8px; }
+    header p { opacity: .9; }
+    .top { display: grid; grid-template-columns: 1.5fr .9fr; gap: 18px; margin-top: 18px; }
+    .card { background: white; border-radius: 18px; padding: 22px; box-shadow: 0 8px 24px rgba(30,70,120,.12); border: 1px solid #e5eef8; }
+    .status { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .badge { display: inline-block; padding: 7px 12px; border-radius: 999px; font-size: 14px; font-weight: 700; background: #e3f2fd; color: #0d47a1; }
+    .badge.exam { background: #ffebee; color: #b71c1c; }
+    .badge.practice { background: #fff8e1; color: #9a6700; }
+    .badge.sport { background: #e8f5e9; color: #1b5e20; }
+    .now-title { font-size: 30px; margin: 12px 0; color: #0b376d; }
+    .big-room { font-size: 44px; font-weight: 800; color: #1565c0; margin: 8px 0; }
+    .meta { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; margin-top: 16px; }
+    .meta div { background: #f4f8ff; padding: 13px; border-radius: 12px; }
+    .meta span { display: block; color: #5b6f86; font-size: 13px; margin-bottom: 3px; }
+    .next { border-left: 5px solid #42a5f5; }
+    .clock { font-size: 42px; font-weight: 800; color: #0d47a1; }
+    .day-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+    .day-tabs button { border: 0; padding: 11px 16px; border-radius: 12px; background: #ffffff; color: #0d47a1; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(30,70,120,.08); }
+    .day-tabs button.active { background: #0d47a1; color: white; }
+    .content { display: grid; grid-template-columns: 1.4fr .8fr; gap: 18px; }
+    .lesson { display: grid; grid-template-columns: 90px 1fr 105px; gap: 14px; padding: 15px 0; border-bottom: 1px solid #edf2f8; align-items: center; }
+    .lesson:last-child { border-bottom: 0; }
+    .lesson.active { background: #e3f2fd; margin: 0 -12px; padding: 15px 12px; border-radius: 14px; border-bottom: 0; }
+    .lesson h3 { font-size: 18px; margin-bottom: 5px; }
+    .lesson small { color: #62758a; }
+    .room { font-size: 19px; font-weight: 800; color: #1565c0; text-align: right; }
+    .empty { padding: 36px; text-align: center; color: #62758a; background: #f7fbff; border-radius: 16px; }
+    .notice { background: #f7fbff; border-radius: 14px; padding: 15px; margin-top: 12px; }
+    .notice h3 { margin-bottom: 8px; color: #0d47a1; }
+    .note-list { padding-left: 18px; line-height: 1.7; }
+    footer { text-align: center; color: #61768b; margin: 20px 0 0; font-size: 14px; }
+    @media (max-width: 900px) { .top, .content { grid-template-columns: 1fr; } .lesson { grid-template-columns: 80px 1fr; } .room { grid-column: 2; text-align: left; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Учебный навигатор пары</h1>
+      <p>Группа ИСиП25-02П. Актуальная пара, кабинет, преподаватель и важные пометки на одном экране.</p>
+    </header>
+    <section class="top">
+      <div class="card" id="currentCard"></div>
+      <div class="card next" id="nextCard"></div>
+    </section>
+    <nav class="day-tabs" id="dayTabs"></nav>
+    <main class="content">
+      <section class="card">
+        <div class="status">
+          <h2 id="dayTitle">Пары на день</h2>
+          <span class="badge" id="lessonCount">0 уроков</span>
+        </div>
+        <div id="daySchedule"></div>
+      </section>
+      <aside class="card">
+        <div class="clock" id="clock">00:00</div>
+        <p id="dateText">Сегодня</p>
+        <div class="notice">
+          <h3>Важные пометки</h3>
+          <ul class="note-list" id="importantNotes"></ul>
+        </div>
+        <div class="notice">
+          <h3>Изменения</h3>
+          <p>Замены, отмены и переносы на сегодня не указаны.</p>
+        </div>
+      </aside>
+    </main>
+    <footer>Проект: Зелин Александр Артурович. HTML, CSS, JavaScript.</footer>
+  </div>
+<script>
+
+const schedule = {
+  1: { day: 'Понедельник', short: 'ПН', lessons: [
+    { num: 7, start: '13:10', end: '13:50', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: 'К2, ВЫС9', type: 'Экзамен', note: 'Важная пара: экзамен' },
+    { num: 8, start: '13:55', end: '14:35', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: 'К2, ВЫС9', type: 'Экзамен', note: 'Важная пара: экзамен' },
+    { num: 9, start: '14:40', end: '15:20', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: '302', type: 'Экзамен', note: 'Важная пара: экзамен' },
+    { num: 10, start: '15:25', end: '16:05', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: '302', type: 'Экзамен', note: 'Важная пара: экзамен' },
+    { num: 11, start: '16:10', end: '16:50', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: '302', type: 'Экзамен', note: 'Важная пара: экзамен' },
+    { num: 12, start: '16:55', end: '17:35', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: '302', type: 'Экзамен', note: 'Важная пара: экзамен' }
+  ]},
+  2: { day: 'Вторник', short: 'ВТ', lessons: [
+    { num: 1, start: '08:15', end: '08:55', subject: 'Физическая культура', teacher: 'Токарев Е.А.', room: 'СП зал', type: 'Физкультура', note: 'Место проведения: спортивный зал' },
+    { num: 2, start: '09:00', end: '09:40', subject: 'Физическая культура', teacher: 'Токарев Е.А.', room: 'СП зал', type: 'Физкультура', note: 'Место проведения: спортивный зал' },
+    { num: 3, start: '09:45', end: '10:25', subject: 'Иностранный язык в профессиональной деятельности', teacher: 'Ващенко Д.Г.', room: '307', type: 'Обычная', note: '' },
+    { num: 4, start: '10:30', end: '11:10', subject: 'Иностранный язык в профессиональной деятельности', teacher: 'Ващенко Д.Г.', room: '307', type: 'Обычная', note: '' },
+    { num: 5, start: '11:15', end: '11:55', subject: 'О.С.Т.', teacher: 'Маренкова Ю.В.', room: '405', type: 'Обычная', note: '' },
+    { num: 6, start: '12:00', end: '12:40', subject: 'О.С.Т.', teacher: 'Маренкова Ю.В.', room: '405', type: 'Обычная', note: '' }
+  ]},
+  3: { day: 'Среда', short: 'СР', lessons: [
+    { num: 1, start: '08:15', end: '08:55', subject: 'МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Обычная', note: '' },
+    { num: 2, start: '09:00', end: '09:40', subject: 'МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Обычная', note: '' },
+    { num: 3, start: '09:45', end: '10:25', subject: '1,2 П МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Практика', note: 'Практическая работа' },
+    { num: 4, start: '10:30', end: '11:10', subject: '1,2 П МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Практика', note: 'Практическая работа' },
+    { num: 5, start: '11:15', end: '11:55', subject: 'О.С.Т.', teacher: 'Маренкова Ю.В.', room: '405', type: 'Обычная', note: '' },
+    { num: 6, start: '12:00', end: '12:40', subject: 'О.С.Т.', teacher: 'Маренкова Ю.В.', room: '405', type: 'Обычная', note: '' },
+    { num: 7, start: '13:10', end: '13:50', subject: 'Дискретная математика', teacher: 'Боенко Е.Н.', room: '305', type: 'Обычная', note: '' },
+    { num: 8, start: '13:55', end: '14:35', subject: 'Дискретная математика', teacher: 'Боенко Е.Н.', room: '305', type: 'Обычная', note: '' },
+    { num: 9, start: '14:40', end: '15:20', subject: 'Физическая культура', teacher: 'Токарев Е.А.', room: 'СП площадка', type: 'Физкультура', note: 'Место проведения: спортивная площадка' },
+    { num: 10, start: '15:25', end: '16:05', subject: 'Физическая культура', teacher: 'Токарев Е.А.', room: 'СП площадка', type: 'Физкультура', note: 'Место проведения: спортивная площадка' }
+  ]},
+  4: { day: 'Четверг', short: 'ЧТ', lessons: [
+    { num: 7, start: '13:10', end: '13:50', subject: '1,2 П Основы алгоритмизации и программирования', teacher: 'Егорова О.С.', room: '206', type: 'Практика', note: 'Практическая работа' },
+    { num: 8, start: '13:55', end: '14:35', subject: '1,2 П Основы алгоритмизации и программирования', teacher: 'Егорова О.С.', room: '206', type: 'Практика', note: 'Практическая работа' },
+    { num: 9, start: '14:40', end: '15:20', subject: '1,2 П Основы алгоритмизации и программирования', teacher: 'Егорова О.С.', room: '206', type: 'Практика', note: 'Практическая работа' },
+    { num: 10, start: '15:25', end: '16:05', subject: '1,2 П Основы алгоритмизации и программирования', teacher: 'Егорова О.С.', room: '206', type: 'Практика', note: 'Практическая работа' },
+    { num: 11, start: '16:10', end: '16:50', subject: 'МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Обычная', note: '' },
+    { num: 12, start: '16:55', end: '17:35', subject: 'МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Обычная', note: '' }
+  ]},
+  5: { day: 'Пятница', short: 'ПТ', lessons: [] }
+};
+
+let selectedDay = new Date().getDay();
+if (selectedDay === 0 || selectedDay === 6) selectedDay = 1;
+function toMinutes(t) { const [h,m] = t.split(':').map(Number); return h * 60 + m; }
+function formatDayName(n) { return schedule[n]?.day || 'День'; }
+function typeClass(type) { if (type === 'Экзамен') return 'exam'; if (type === 'Практика') return 'practice'; if (type === 'Физкультура') return 'sport'; return ''; }
+function findCurrent(now = new Date()) {
+  const day = now.getDay();
+  const min = now.getHours() * 60 + now.getMinutes();
+  const lessons = schedule[day]?.lessons || [];
+  const current = lessons.find(l => min >= toMinutes(l.start) && min <= toMinutes(l.end));
+  return current ? { day, lesson: current } : null;
+}
+function findNext(now = new Date()) {
+  const today = now.getDay();
+  const min = now.getHours() * 60 + now.getMinutes();
+  for (let shift = 0; shift < 8; shift++) {
+    let day = (today + shift) % 7;
+    if (day === 0 || day === 6) continue;
+    const lessons = schedule[day]?.lessons || [];
+    for (const lesson of lessons) {
+      if (shift > 0 || toMinutes(lesson.start) > min) return { day, lesson };
+    }
+  }
+  return null;
+}
+function renderCurrent() {
+  const current = findCurrent();
+  const next = findNext();
+  const c = document.getElementById('currentCard');
+  if (current) {
+    const l = current.lesson;
+    c.innerHTML = `<div class="status"><span class="badge ${typeClass(l.type)}">Сейчас идёт</span><span>${formatDayName(current.day)}</span></div><h2 class="now-title">${l.subject}</h2><div class="big-room">${l.room}</div><div class="meta"><div><span>Время</span>${l.start}–${l.end}</div><div><span>Урок</span>${l.num} урок</div><div><span>Преподаватель</span>${l.teacher}</div><div><span>Пометка</span>${l.note || l.type}</div></div>`;
+  } else {
+    c.innerHTML = `<div class="status"><span class="badge">Сейчас пары нет</span></div><h2 class="now-title">Свободное время</h2><p>Можно посмотреть следующую пару и расписание на выбранный день.</p>`;
+  }
+  const n = document.getElementById('nextCard');
+  if (next) {
+    const l = next.lesson;
+    n.innerHTML = `<span class="badge">Следующая пара</span><h2 class="now-title">${l.subject}</h2><div class="big-room">${l.room}</div><div class="meta"><div><span>День</span>${formatDayName(next.day)}</div><div><span>Время</span>${l.start}–${l.end}</div><div><span>Урок</span>${l.num} урок</div><div><span>Преподаватель</span>${l.teacher}</div></div>`;
+  } else { n.innerHTML = '<h2>Следующая пара не найдена</h2>'; }
+}
+function renderTabs() {
+  const tabs = document.getElementById('dayTabs');
+  tabs.innerHTML = '';
+  [1,2,3,4,5].forEach(d => {
+    const b = document.createElement('button');
+    b.textContent = `${schedule[d].short} — ${schedule[d].day}`;
+    b.className = d === selectedDay ? 'active' : '';
+    b.onclick = () => { selectedDay = d; renderTabs(); renderDay(); };
+    tabs.appendChild(b);
+  });
+}
+function renderDay() {
+  const day = schedule[selectedDay];
+  document.getElementById('dayTitle').textContent = day.day;
+  document.getElementById('lessonCount').textContent = day.lessons.length ? `${day.lessons.length} уроков` : 'Выходной';
+  const current = findCurrent();
+  const wrap = document.getElementById('daySchedule');
+  if (!day.lessons.length) { wrap.innerHTML = '<div class="empty">В этот день по расписанию выходной.</div>'; }
+  else {
+    wrap.innerHTML = day.lessons.map(l => {
+      const active = current && current.day === selectedDay && current.lesson.num === l.num ? 'active' : '';
+      return `<div class="lesson ${active}"><div><b>${l.start}</b><br><small>${l.end}</small></div><div><h3>${l.num} урок — ${l.subject}</h3><small>${l.teacher}</small><br><span class="badge ${typeClass(l.type)}">${l.type}</span> ${l.note ? `<small>${l.note}</small>` : ''}</div><div class="room">${l.room}</div></div>`;
+    }).join('');
+  }
+  const notes = day.lessons.filter(l => l.note || l.type !== 'Обычная');
+  document.getElementById('importantNotes').innerHTML = notes.length ? notes.map(l => `<li>${l.start} — ${l.type}: ${l.subject}</li>`).join('') : '<li>Важных пометок на выбранный день нет.</li>';
+}
+function tick() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('dateText').textContent = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+  renderCurrent();
+  renderDay();
+}
+renderTabs(); renderDay(); tick(); setInterval(tick, 30000);
+</script>
+</body>
+</html>

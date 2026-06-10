@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Учебный навигатор пары — базовая версия</title>
+<style>
+body { font-family: Arial, sans-serif; background: #eef4ff; color: #17324d; margin: 0; padding: 25px; }
+.container { max-width: 900px; margin: auto; }
+h1 { background: #0d47a1; color: white; padding: 18px; border-radius: 12px; }
+.card { background: white; padding: 18px; border-radius: 12px; margin: 15px 0; box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+.lesson { padding: 10px; border-bottom: 1px solid #ddd; }
+.lesson:last-child { border-bottom: 0; }
+.badge { background: #e3f2fd; color: #0d47a1; border-radius: 20px; padding: 4px 9px; font-weight: bold; font-size: 13px; }
+.active { background: #d8ecff; border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Учебный навигатор пары</h1>
+<div class="card" id="now"></div>
+<div class="card"><h2>Расписание на сегодня</h2><div id="list"></div></div>
+</div>
+<script>
+
+const schedule = {
+  1: { day: 'Понедельник', short: 'ПН', lessons: [
+    { num: 7, start: '13:10', end: '13:50', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: 'К2, ВЫС9', type: 'Экзамен', note: 'Важная пара: экзамен' },
+    { num: 8, start: '13:55', end: '14:35', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: 'К2, ВЫС9', type: 'Экзамен', note: 'Важная пара: экзамен' },
+    { num: 9, start: '14:40', end: '15:20', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: '302', type: 'Экзамен', note: 'Важная пара: экзамен' },
+    { num: 10, start: '15:25', end: '16:05', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: '302', type: 'Экзамен', note: 'Важная пара: экзамен' },
+    { num: 11, start: '16:10', end: '16:50', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: '302', type: 'Экзамен', note: 'Важная пара: экзамен' },
+    { num: 12, start: '16:55', end: '17:35', subject: 'Экзамен', teacher: 'Костюченко А.А.', room: '302', type: 'Экзамен', note: 'Важная пара: экзамен' }
+  ]},
+  2: { day: 'Вторник', short: 'ВТ', lessons: [
+    { num: 1, start: '08:15', end: '08:55', subject: 'Физическая культура', teacher: 'Токарев Е.А.', room: 'СП зал', type: 'Физкультура', note: 'Место проведения: спортивный зал' },
+    { num: 2, start: '09:00', end: '09:40', subject: 'Физическая культура', teacher: 'Токарев Е.А.', room: 'СП зал', type: 'Физкультура', note: 'Место проведения: спортивный зал' },
+    { num: 3, start: '09:45', end: '10:25', subject: 'Иностранный язык в профессиональной деятельности', teacher: 'Ващенко Д.Г.', room: '307', type: 'Обычная', note: '' },
+    { num: 4, start: '10:30', end: '11:10', subject: 'Иностранный язык в профессиональной деятельности', teacher: 'Ващенко Д.Г.', room: '307', type: 'Обычная', note: '' },
+    { num: 5, start: '11:15', end: '11:55', subject: 'О.С.Т.', teacher: 'Маренкова Ю.В.', room: '405', type: 'Обычная', note: '' },
+    { num: 6, start: '12:00', end: '12:40', subject: 'О.С.Т.', teacher: 'Маренкова Ю.В.', room: '405', type: 'Обычная', note: '' }
+  ]},
+  3: { day: 'Среда', short: 'СР', lessons: [
+    { num: 1, start: '08:15', end: '08:55', subject: 'МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Обычная', note: '' },
+    { num: 2, start: '09:00', end: '09:40', subject: 'МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Обычная', note: '' },
+    { num: 3, start: '09:45', end: '10:25', subject: '1,2 П МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Практика', note: 'Практическая работа' },
+    { num: 4, start: '10:30', end: '11:10', subject: '1,2 П МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Практика', note: 'Практическая работа' },
+    { num: 5, start: '11:15', end: '11:55', subject: 'О.С.Т.', teacher: 'Маренкова Ю.В.', room: '405', type: 'Обычная', note: '' },
+    { num: 6, start: '12:00', end: '12:40', subject: 'О.С.Т.', teacher: 'Маренкова Ю.В.', room: '405', type: 'Обычная', note: '' },
+    { num: 7, start: '13:10', end: '13:50', subject: 'Дискретная математика', teacher: 'Боенко Е.Н.', room: '305', type: 'Обычная', note: '' },
+    { num: 8, start: '13:55', end: '14:35', subject: 'Дискретная математика', teacher: 'Боенко Е.Н.', room: '305', type: 'Обычная', note: '' },
+    { num: 9, start: '14:40', end: '15:20', subject: 'Физическая культура', teacher: 'Токарев Е.А.', room: 'СП площадка', type: 'Физкультура', note: 'Место проведения: спортивная площадка' },
+    { num: 10, start: '15:25', end: '16:05', subject: 'Физическая культура', teacher: 'Токарев Е.А.', room: 'СП площадка', type: 'Физкультура', note: 'Место проведения: спортивная площадка' }
+  ]},
+  4: { day: 'Четверг', short: 'ЧТ', lessons: [
+    { num: 7, start: '13:10', end: '13:50', subject: '1,2 П Основы алгоритмизации и программирования', teacher: 'Егорова О.С.', room: '206', type: 'Практика', note: 'Практическая работа' },
+    { num: 8, start: '13:55', end: '14:35', subject: '1,2 П Основы алгоритмизации и программирования', teacher: 'Егорова О.С.', room: '206', type: 'Практика', note: 'Практическая работа' },
+    { num: 9, start: '14:40', end: '15:20', subject: '1,2 П Основы алгоритмизации и программирования', teacher: 'Егорова О.С.', room: '206', type: 'Практика', note: 'Практическая работа' },
+    { num: 10, start: '15:25', end: '16:05', subject: '1,2 П Основы алгоритмизации и программирования', teacher: 'Егорова О.С.', room: '206', type: 'Практика', note: 'Практическая работа' },
+    { num: 11, start: '16:10', end: '16:50', subject: 'МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Обычная', note: '' },
+    { num: 12, start: '16:55', end: '17:35', subject: 'МДК.05.02 Разработка кода информационных систем', teacher: 'Глухов С.Ю.', room: '403', type: 'Обычная', note: '' }
+  ]},
+  5: { day: 'Пятница', short: 'ПТ', lessons: [] }
+};
+
+function toMinutes(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
+function render() {
+ const d = new Date().getDay();
+ const nowMin = new Date().getHours()*60 + new Date().getMinutes();
+ const day = schedule[d] || {day:'Выходной', lessons:[]};
+ const lessons = day.lessons || [];
+ const current = lessons.find(l => nowMin >= toMinutes(l.start) && nowMin <= toMinutes(l.end));
+ const next = lessons.find(l => toMinutes(l.start) > nowMin);
+ document.getElementById('now').innerHTML = current ? `<h2>Сейчас идёт: ${current.subject}</h2><p><b>Кабинет:</b> ${current.room}</p><p><b>Преподаватель:</b> ${current.teacher}</p><p><b>Время:</b> ${current.start}–${current.end}</p>` : `<h2>Сейчас пары нет</h2><p>${next ? 'Следующая: '+next.subject+' в '+next.start+', кабинет '+next.room : 'Сегодня пар больше нет.'}</p>`;
+ document.getElementById('list').innerHTML = lessons.length ? lessons.map(l => `<div class="lesson ${current && current.num===l.num?'active':''}"><b>${l.num} урок</b> ${l.start}–${l.end}<br>${l.subject}<br>${l.teacher}, ${l.room} <span class="badge">${l.type}</span></div>`).join('') : '<p>Сегодня выходной.</p>';
+}
+render(); setInterval(render, 60000);
+</script>
+</body>
+</html>
